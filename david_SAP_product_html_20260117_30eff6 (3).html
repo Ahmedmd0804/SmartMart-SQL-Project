@@ -1,0 +1,3393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Invoice Data System (IIDS)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css">
+    <style>
+        :root {
+            /* SAP Theme Colors */
+            --primary-blue: #0a6ed1;
+            --primary-blue-dark: #0854a0;
+            --primary-blue-light: #ebf8ff;
+            --success-green: #107e3e;
+            --warning-yellow: #e76500;
+            --error-red: #bb0000;
+            --dark-gray: #32363a;
+            --medium-gray: #6a6d70;
+            --light-gray: #f5f6f7;
+            --border-gray: #d9d9d9;
+            --white: #ffffff;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
+            --radius: 4px;
+            --radius-lg: 8px;
+        }
+
+        .dark-theme {
+            --primary-blue: #4db1ff;
+            --primary-blue-dark: #0a6ed1;
+            --primary-blue-light: #1a2733;
+            --success-green: #5dc26a;
+            --warning-yellow: #f9b54c;
+            --error-red: #ff8e8e;
+            --dark-gray: #f5f6f7;
+            --medium-gray: #cfd4d9;
+            --light-gray: #2a3b4d;
+            --border-gray: #3d4e60;
+            --white: #1a2733;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: var(--dark-gray);
+            transition: var(--transition);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Auth Overlay */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .auth-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .auth-container {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .auth-overlay.active .auth-container {
+            transform: translateY(0);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 1rem;
+            background: none;
+            border: none;
+            font-weight: 600;
+            color: var(--medium-gray);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .auth-tab.active {
+            color: var(--primary-blue);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-blue);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-gray);
+            border-radius: var(--radius);
+            background-color: var(--white);
+            color: var(--dark-gray);
+            transition: var(--transition);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(10, 110, 209, 0.1);
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+
+        .remember-me input {
+            width: auto;
+        }
+
+        .social-login {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        .social-login p {
+            color: var(--medium-gray);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .social-login p::before, .social-login p::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 30%;
+            height: 1px;
+            background-color: var(--border-gray);
+        }
+
+        .social-login p::before {
+            left: 0;
+        }
+
+        .social-login p::after {
+            right: 0;
+        }
+
+        .social-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--border-gray);
+            border-radius: var(--radius);
+            background-color: var(--white);
+            color: var(--dark-gray);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .social-btn:hover {
+            background-color: var(--light-gray);
+        }
+
+        .social-btn.google {
+            color: #DB4437;
+        }
+
+        .social-btn.microsoft {
+            color: #00A4EF;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 0.9rem;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .auth-btn:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+
+        .auth-footer a {
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: var(--transition);
+            display: none;
+        }
+
+        header.active {
+            display: flex;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .logo-text p {
+            font-size: 0.8rem;
+            color: var(--medium-gray);
+        }
+
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--dark-gray);
+            font-weight: 500;
+            padding: 0.5rem 0;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover {
+            color: var(--primary-blue);
+        }
+
+        .nav-link.active {
+            color: var(--primary-blue);
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-blue);
+            border-radius: 2px;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--medium-gray);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--light-gray);
+            color: var(--primary-blue);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            position: relative;
+            font-size: 1.2rem;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            display: none;
+            z-index: 10;
+        }
+
+        .user-avatar:hover .user-dropdown {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user-dropdown a {
+            display: block;
+            padding: 1rem;
+            color: var(--dark-gray);
+            text-decoration: none;
+            transition: var(--transition);
+            border-bottom: 1px solid var(--border-gray);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-dropdown a:last-child {
+            border-bottom: none;
+        }
+
+        .user-dropdown a:hover {
+            background-color: var(--light-gray);
+            color: var(--primary-blue);
+        }
+
+        .auth-btn-header {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .auth-btn-header:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: calc(100vh - 200px);
+            display: none;
+        }
+
+        .container.active {
+            display: block;
+        }
+
+        /* Dashboard Page */
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--primary-blue);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card.pending {
+            border-top-color: var(--warning-yellow);
+        }
+
+        .stat-card.approved {
+            border-top-color: var(--success-green);
+        }
+
+        .stat-card.total {
+            border-top-color: var(--primary-blue-dark);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-gray);
+        }
+
+        .stat-desc {
+            font-size: 0.8rem;
+            color: var(--medium-gray);
+            margin-top: 0.5rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section-card {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title a {
+            font-size: 0.9rem;
+            color: var(--primary-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .section-title a:hover {
+            text-decoration: underline;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--medium-gray);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .status-approved {
+            background-color: rgba(16, 126, 62, 0.1);
+            color: var(--success-green);
+        }
+
+        .upload-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .upload-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--light-gray);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .upload-option:hover {
+            background-color: var(--border-gray);
+        }
+
+        .upload-option i {
+            font-size: 1.5rem;
+            color: var(--primary-blue);
+        }
+
+        /* Enhanced Dashboard Elements */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-header h3 {
+            font-size: 1.1rem;
+            color: var(--dark-gray);
+        }
+
+        .chart-wrapper {
+            height: 250px;
+            position: relative;
+        }
+
+        /* Upload Page */
+        .upload-page {
+            display: none;
+        }
+
+        .upload-page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-gray);
+            border-radius: var(--radius-lg);
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary-blue);
+            background-color: var(--primary-blue-light);
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--primary-blue);
+            margin-bottom: 1rem;
+        }
+
+        .upload-area h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-gray);
+        }
+
+        .upload-area p {
+            color: var(--medium-gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-btn {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-block;
+        }
+
+        .upload-btn:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        .selected-file {
+            background-color: var(--light-gray);
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideUp 0.3s ease;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-blue);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .process-btn {
+            background-color: var(--success-green);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 2rem auto 0;
+        }
+
+        .process-btn:hover {
+            background-color: #0e6b36;
+        }
+
+        .process-btn i {
+            animation: spin 1s linear infinite;
+        }
+
+        /* Processing Page */
+        .processing-page {
+            display: none;
+        }
+
+        .processing-page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .processing-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .processing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .processing-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .processing-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--border-gray);
+            z-index: 1;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+
+        .step:not(:last-child) {
+            margin-right: 1rem;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--border-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--medium-gray);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .step.active .step-circle {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            background-color: var(--success-green);
+            color: white;
+        }
+
+        .step.completed .step-circle i {
+            font-size: 1.2rem;
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            color: var(--medium-gray);
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .processing-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .processing-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .pdf-preview {
+            border: 1px solid var(--border-gray);
+            border-radius: var(--radius);
+            height: 500px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .pdf-placeholder {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--medium-gray);
+        }
+
+        .pdf-placeholder i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .extracted-data {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table tr {
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .data-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .data-table td {
+            padding: 1rem 0;
+            vertical-align: top;
+        }
+
+        .field-label {
+            font-weight: 600;
+            color: var(--dark-gray);
+            width: 40%;
+        }
+
+        .field-value {
+            color: var(--dark-gray);
+            font-weight: 500;
+        }
+
+        .confidence-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+            display: inline-block;
+            margin-left: 1rem;
+        }
+
+        .confidence-high {
+            background-color: rgba(16, 126, 62, 0.1);
+            color: var(--success-green);
+        }
+
+        .confidence-medium {
+            background-color: rgba(231, 101, 0, 0.1);
+            color: var(--warning-yellow);
+        }
+
+        .confidence-low {
+            background-color: rgba(187, 0, 0, 0.1);
+            color: var(--error-red);
+        }
+
+        .line-items {
+            margin-top: 1rem;
+        }
+
+        .line-items table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .line-items th {
+            background-color: var(--light-gray);
+            font-size: 0.8rem;
+            padding: 0.8rem;
+        }
+
+        .line-items td {
+            padding: 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .secondary-btn {
+            background-color: transparent;
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue);
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .secondary-btn:hover {
+            background-color: var(--primary-blue-light);
+        }
+
+        .primary-btn {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .primary-btn:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        .success-btn {
+            background-color: var(--success-green);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .success-btn:hover {
+            background-color: #0e6b36;
+        }
+
+        .json-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .json-btn:hover {
+            background-color: #5a6268;
+        }
+
+        /* Download Invoice Button */
+        .download-invoice-btn {
+            background-color: transparent;
+            color: var(--primary-blue);
+            border: none;
+            padding: 0.3rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+
+        .download-invoice-btn:hover {
+            color: var(--primary-blue-dark);
+        }
+
+        /* History Page */
+        .history-page {
+            display: none;
+        }
+
+        .history-page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .history-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--white);
+            border: 1px solid var(--border-gray);
+            border-radius: var(--radius);
+            color: var(--dark-gray);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary-blue);
+            color: var(--primary-blue);
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .history-search {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border: 1px solid var(--border-gray);
+            border-radius: var(--radius) 0 0 var(--radius);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-blue);
+        }
+
+        .search-btn {
+            padding: 0.8rem 1.5rem;
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            border-radius: 0 var(--radius) var(--radius) 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .search-btn:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .history-item {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .history-item-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .history-item-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--radius);
+            background-color: var(--primary-blue-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-size: 1.2rem;
+        }
+
+        .history-item-details {
+            flex: 1;
+        }
+
+        .history-item-details h4 {
+            margin-bottom: 0.3rem;
+            color: var(--dark-gray);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .history-item-details p {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+
+        .history-item-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-size {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+
+        /* Settings Page */
+        .settings-page {
+            display: none;
+        }
+
+        .settings-page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--white);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .settings-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .settings-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border-gray);
+            color: var(--dark-gray);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info h4 {
+            margin-bottom: 0.3rem;
+            color: var(--dark-gray);
+        }
+
+        .setting-info p {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-gray);
+            transition: var(--transition);
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-blue);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        .select-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-gray);
+            border-radius: var(--radius);
+            background-color: var(--white);
+            color: var(--dark-gray);
+            min-width: 200px;
+        }
+
+        /* SAP Connection Status */
+        .sap-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: var(--light-gray);
+            border-radius: var(--radius);
+            margin-bottom: 2rem;
+        }
+
+        .sap-status-connected {
+            background-color: rgba(16, 126, 62, 0.1);
+            border-left: 4px solid var(--success-green);
+        }
+
+        .sap-status-disconnected {
+            background-color: rgba(187, 0, 0, 0.1);
+            border-left: 4px solid var(--error-red);
+        }
+
+        .sap-status-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .sap-status-connected .sap-status-icon {
+            background-color: var(--success-green);
+        }
+
+        .sap-status-disconnected .sap-status-icon {
+            background-color: var(--error-red);
+        }
+
+        .sap-connect-btn {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .sap-connect-btn:hover {
+            background-color: var(--primary-blue-dark);
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--white);
+            padding: 2rem;
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-gray);
+            transition: var(--transition);
+            display: none;
+        }
+
+        footer.active {
+            display: block;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            color: var(--dark-gray);
+        }
+
+        .footer-section p {
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section ul li a {
+            text-decoration: none;
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .footer-section ul li a:hover {
+            color: var(--primary-blue);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-gray);
+            color: var(--medium-gray);
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            nav {
+                gap: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .dashboard-grid, .charts-container, .history-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-container, .processing-container, .settings-container {
+                padding: 1.5rem;
+            }
+            
+            .processing-steps {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: flex-start;
+            }
+            
+            .processing-steps::before {
+                display: none;
+            }
+            
+            .step {
+                flex-direction: row;
+                width: 100%;
+                gap: 1rem;
+            }
+            
+            .step-circle {
+                margin-bottom: 0;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-buttons button {
+                width: 100%;
+            }
+            
+            .social-buttons {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .upload-area {
+                padding: 2rem 1rem;
+            }
+            
+            .upload-area h3 {
+                font-size: 1.1rem;
+            }
+            
+            .auth-container {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            position: relative;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            margin-top: -15px;
+            margin-left: -15px;
+            border: 3px solid var(--border-gray);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Overlay -->
+    <div class="auth-overlay active" id="authOverlay">
+        <div class="auth-container">
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-form="login">Login</button>
+                <button class="auth-tab" data-form="signup">Sign Up</button>
+            </div>
+            
+            <div class="auth-form active" id="loginForm">
+                <div class="form-group">
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+                
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberLogin">
+                    <label for="rememberLogin">Remember this device for 30 days</label>
+                </div>
+                
+                <button class="auth-btn" id="loginBtn">Login</button>
+                
+                <div class="social-login">
+                    <p>Or continue with</p>
+                    <div class="social-buttons">
+                        <button class="social-btn google" id="googleLogin">
+                            <i class="fab fa-google"></i> Google
+                        </button>
+                        <button class="social-btn microsoft" id="microsoftLogin">
+                            <i class="fab fa-microsoft"></i> Microsoft
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="auth-footer">
+                    <p>Don't have an account? <a href="#" id="switchToSignup">Sign Up</a></p>
+                </div>
+            </div>
+            
+            <div class="auth-form" id="signupForm">
+                <div class="form-group">
+                    <label for="signupName">Full Name</label>
+                    <input type="text" id="signupName" placeholder="Enter your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupEmail">Email Address</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create a password">
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" placeholder="Confirm your password">
+                </div>
+                
+                <div class="remember-me">
+                    <input type="checkbox" id="rememberSignup">
+                    <label for="rememberSignup">Remember this device for 30 days</label>
+                </div>
+                
+                <button class="auth-btn" id="signupBtn">Create Account</button>
+                
+                <div class="social-login">
+                    <p>Or sign up with</p>
+                    <div class="social-buttons">
+                        <button class="social-btn google" id="googleSignup">
+                            <i class="fab fa-google"></i> Google
+                        </button>
+                        <button class="social-btn microsoft" id="microsoftSignup">
+                            <i class="fab fa-microsoft"></i> Microsoft
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="#" id="switchToLogin">Login</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header id="mainHeader">
+        <div class="logo-container">
+            <div class="logo">IIDS</div>
+            <div class="logo-text">
+                <h1>Intelligent Invoice Data System</h1>
+                <p>SAP Integration Platform</p>
+            </div>
+        </div>
+        
+        <nav>
+            <a href="#" class="nav-link active" data-page="dashboard">Dashboard</a>
+            <a href="#" class="nav-link" data-page="upload">Upload Invoice</a>
+            <a href="#" class="nav-link" data-page="history">History</a>
+            <a href="#" class="nav-link" data-page="settings">Settings</a>
+        </nav>
+        
+        <div class="user-menu">
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="user-avatar" id="userAvatar">
+                <i class="fas fa-user"></i>
+                <div class="user-dropdown">
+                    <a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    <a href="#" data-page="settings"><i class="fas fa-cog"></i> Settings</a>
+                    <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="container" id="mainContainer">
+        <!-- Dashboard Page -->
+        <div class="dashboard active" id="dashboard">
+            <h1 class="page-title">Dashboard</h1>
+            
+            <!-- SAP Connection Status -->
+            <div class="sap-status sap-status-connected">
+                <div class="sap-status-icon">
+                    <i class="fas fa-plug"></i>
+                </div>
+                <div>
+                    <h4>SAP System Connected</h4>
+                    <p>SAP S/4HANA System - Connection Active</p>
+                </div>
+                <button class="sap-connect-btn">Manage Connection</button>
+            </div>
+            
+            <div class="stats-container">
+                <div class="stat-card pending">
+                    <h3>Pending Invoices</h3>
+                    <div class="stat-value">12</div>
+                    <div class="stat-desc">Awaiting processing or approval</div>
+                </div>
+                
+                <div class="stat-card approved">
+                    <h3>Approved Invoices</h3>
+                    <div class="stat-value">36</div>
+                    <div class="stat-desc">Successfully processed</div>
+                </div>
+                
+                <div class="stat-card total">
+                    <h3>Total Amount</h3>
+                    <div class="stat-value">$78,450.00</div>
+                    <div class="stat-desc">Total value of processed invoices</div>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Processed This Week</h3>
+                    <div class="stat-value">18</div>
+                    <div class="stat-desc">Invoices processed in last 7 days</div>
+                </div>
+            </div>
+            
+            <div class="charts-container">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Invoice Processing Trend</h3>
+                        <select class="select-input" style="font-size: 0.8rem; padding: 0.3rem 0.5rem;">
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                            <option>Last 90 days</option>
+                        </select>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="processingTrendChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Invoice Status Distribution</h3>
+                        <select class="select-input" style="font-size: 0.8rem; padding: 0.3rem 0.5rem;">
+                            <option>This Month</option>
+                            <option>Last Month</option>
+                            <option>This Quarter</option>
+                        </select>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="statusDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="section-card">
+                    <div class="section-title">
+                        Recent Invoices
+                        <a href="#" data-page="history">See All</a>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Invoice Number</th>
+                                    <th>Vendor</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <span class="invoice-link" onclick="downloadOriginalInvoice('INV-1001')">INV-1001</span>
+                                        <button class="download-invoice-btn" onclick="downloadOriginalInvoice('INV-1001')" title="Download Original Invoice">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td>ABC Supplies</td>
+                                    <td>$1,250.00</td>
+                                    <td><span class="status-badge status-approved">Approved</span></td>
+                                    <td>04/21/2024</td>
+                                    <td>
+                                        <button class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="downloadJSON('INV-1001')">
+                                            <i class="fas fa-download"></i> JSON
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="invoice-link" onclick="downloadOriginalInvoice('INV-1002')">INV-1002</span>
+                                        <button class="download-invoice-btn" onclick="downloadOriginalInvoice('INV-1002')" title="Download Original Invoice">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td>Barbecue's</td>
+                                    <td>$1,250.00</td>
+                                    <td><span class="status-badge status-approved">Approved</span></td>
+                                    <td>04/21/2024</td>
+                                    <td>
+                                        <button class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="downloadJSON('INV-1002')">
+                                            <i class="fas fa-download"></i> JSON
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="invoice-link" onclick="downloadOriginalInvoice('INV-1003')">INV-1003</span>
+                                        <button class="download-invoice-btn" onclick="downloadOriginalInvoice('INV-1003')" title="Download Original Invoice">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td>Tech Solutions Inc.</td>
+                                    <td>$3,450.00</td>
+                                    <td><span class="status-badge" style="background-color: rgba(231, 101, 0, 0.1); color: #e76500;">Pending</span></td>
+                                    <td>04/20/2024</td>
+                                    <td>
+                                        <button class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="downloadJSON('INV-1003')">
+                                            <i class="fas fa-download"></i> JSON
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span class="invoice-link" onclick="downloadOriginalInvoice('INV-1004')">INV-1004</span>
+                                        <button class="download-invoice-btn" onclick="downloadOriginalInvoice('INV-1004')" title="Download Original Invoice">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </td>
+                                    <td>Office Supply Co.</td>
+                                    <td>$875.50</td>
+                                    <td><span class="status-badge status-approved">Approved</span></td>
+                                    <td>04/19/2024</td>
+                                    <td>
+                                        <button class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="downloadJSON('INV-1004')">
+                                            <i class="fas fa-download"></i> JSON
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="section-card">
+                    <div class="section-title">Quick Actions</div>
+                    
+                    <div class="upload-options">
+                        <div class="upload-option" data-page="upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <div>
+                                <h4>Upload New Invoice</h4>
+                                <p>Process a new invoice file</p>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-option" data-page="history">
+                            <i class="fas fa-history"></i>
+                            <div>
+                                <h4>View Invoice History</h4>
+                                <p>Check previously processed invoices</p>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-option">
+                            <i class="fas fa-chart-bar"></i>
+                            <div>
+                                <h4>View Reports</h4>
+                                <p>Analytics and insights</p>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-option" data-page="settings">
+                            <i class="fas fa-cog"></i>
+                            <div>
+                                <h4>Settings</h4>
+                                <p>Configure system preferences</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Invoice Page -->
+        <div class="upload-page" id="upload">
+            <h1 class="page-title">Upload Invoice</h1>
+            
+            <div class="upload-container">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <h3>Select Invoice PDF</h3>
+                    <p>Drag and drop your invoice file here, or click to browse</p>
+                    <button class="upload-btn" id="browseBtn">Browse Files</button>
+                    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg" hidden>
+                    <p style="font-size: 0.9rem; margin-top: 1rem;">Supported formats: PDF, PNG, JPG (Max 10MB)</p>
+                </div>
+                
+                <div id="selectedFileContainer" class="hidden">
+                    <div class="selected-file">
+                        <div class="file-info">
+                            <div class="file-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div>
+                                <h4 id="fileName">invoice_sample.pdf</h4>
+                                <p id="fileSize">2.4 MB</p>
+                            </div>
+                        </div>
+                        <button id="removeFileBtn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <button class="process-btn" id="processBtn">
+                        <i class="fas fa-cog"></i> Process Invoice
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Page -->
+        <div class="processing-page" id="processing">
+            <div class="processing-container">
+                <div class="processing-header">
+                    <h1 class="page-title">Processing Invoice</h1>
+                    <div id="invoiceNumberDisplay">INV-2024-001</div>
+                </div>
+                
+                <div class="processing-steps">
+                    <div class="step completed">
+                        <div class="step-circle"><i class="fas fa-check"></i></div>
+                        <div class="step-label">Upload</div>
+                    </div>
+                    <div class="step active">
+                        <div class="step-circle">2</div>
+                        <div class="step-label">Extracting Data</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-circle">3</div>
+                        <div class="step-label">Validation</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-circle">4</div>
+                        <div class="step-label">Review</div>
+                    </div>
+                </div>
+                
+                <div class="processing-content">
+                    <div class="pdf-preview">
+                        <div class="pdf-placeholder">
+                            <i class="fas fa-file-pdf"></i>
+                            <h3>Invoice Preview</h3>
+                            <p>PDF viewer will be displayed here</p>
+                            <button class="upload-btn" style="margin-top: 1rem;" onclick="downloadOriginalInvoice('INV-2024-001')">
+                                <i class="fas fa-download"></i> Download Original
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="extracted-data">
+                        <h3>Extracted Data</h3>
+                        
+                        <table class="data-table">
+                            <tr>
+                                <td class="field-label">Vendor Name</td>
+                                <td class="field-value">ABC Supplies Inc.
+                                    <span class="confidence-badge confidence-high">98%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="field-label">Invoice Number</td>
+                                <td class="field-value">INV-2024-001
+                                    <span class="confidence-badge confidence-high">96%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="field-label">Invoice Date</td>
+                                <td class="field-value">April 15, 2024
+                                    <span class="confidence-badge confidence-high">99%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="field-label">Total Amount</td>
+                                <td class="field-value">$1,250.00
+                                    <span class="confidence-badge confidence-high">95%</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="field-label">PO Number</td>
+                                <td class="field-value">PO-789012
+                                    <span class="confidence-badge confidence-medium">85%</span>
+                                </td>
+                            </tr>
+                        </table>
+                        
+                        <div class="line-items">
+                            <h4>Line Items</h4>
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Office Supplies</td>
+                                            <td>50</td>
+                                            <td>$15.00</td>
+                                            <td>$750.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Printer Cartridges</td>
+                                            <td>10</td>
+                                            <td>$50.00</td>
+                                            <td>$500.00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="json-btn" id="downloadJSONBtn">
+                                <i class="fas fa-download"></i> Download as JSON
+                            </button>
+                            <button class="secondary-btn" id="editBtn">Edit Data</button>
+                            <button class="primary-btn" id="validateBtn">Validate</button>
+                            <button class="success-btn" id="saveToSAPBtn">
+                                <i class="fas fa-database"></i> Save to SAP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Page -->
+        <div class="history-page" id="history">
+            <h1 class="page-title">Invoice History</h1>
+            
+            <div class="history-filters">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">PDF</button>
+                <button class="filter-btn">Image</button>
+                <button class="filter-btn">Recent</button>
+                <button class="filter-btn">Processed</button>
+                <button class="filter-btn">Pending</button>
+            </div>
+            
+            <div class="history-search">
+                <input type="text" class="search-input" placeholder="Search documents...">
+                <button class="search-btn"><i class="fas fa-search"></i></button>
+            </div>
+            
+            <div class="history-grid">
+                <div>
+                    <div class="section-card">
+                        <div class="section-title">Recent Invoices</div>
+                        
+                        <div class="history-list">
+                            <div class="history-item" data-invoice="INV-2024-001">
+                                <div class="history-item-info">
+                                    <div class="history-item-icon">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <div class="history-item-details">
+                                        <h4>
+                                            IIDPS_Branded_Architecture_With_Failover_Fallout (1).pdf
+                                            <button class="download-invoice-btn" onclick="downloadOriginalInvoice('INV-2024-001')" title="Download Original Invoice">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </h4>
+                                        <p>Today, 11:06 AM</p>
+                                    </div>
+                                </div>
+                                <div class="history-item-status">
+                                    <span class="file-size">256.09 KB</span>
+                                    <span class="status-badge status-approved">Processed</span>
+                                    <button class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="downloadJSON('INV-2024-001')">
+                                        <i class="fas fa-download"></i> JSON
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="history-item" data-invoice="INV-2024-002">
+                                <div class="history-item-info">
+                                    <div class="history-item-icon">
+                                        <i class="fas fa-file-image"></i>
+                                    </div>
+                                    <div class="history-item-details">
+                                        <h4>
+                                            Screenshot 2023-08-04 224840.png
+                                            <button class="download-invoice-btn" onclick="downloadOriginalInvoice('INV-2024-002')" title="Download Original Invoice">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </h4>
+                                        <p>Jan 11, 2023</p>
+                                    </div>
+                                </div>
+                                <div class="history-item-status">
+                                    <span class="file-size">26.27 KB</span>
+                                    <span class="status-badge status-approved">Processed</span>
+                                    <button class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="downloadJSON('INV-2024-002')">
+                                        <i class="fas fa-download"></i> JSON
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="history-item" data-invoice="INV-2024-003">
+                                <div class="history-item-info">
+                                    <div class="history-item-icon">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <div class="history-item-details">
+                                        <h4>
+                                            Quarterly_Financial_Report_Q1_2024.pdf
+                                            <button class="download-invoice-btn" onclick="downloadOriginalInvoice('INV-2024-003')" title="Download Original Invoice">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                                        </h4>
+                                        <p>April 10, 2024</p>
+                                    </div>
+                                </div>
+                                <div class="history-item-status">
+                                    <span class="file-size">1.24 MB</span>
+                                    <span class="status-badge" style="background-color: rgba(231, 101, 0, 0.1); color: #e76500;">Pending Review</span>
+                                    <button class="secondary-btn" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;" onclick="downloadJSON('INV-2024-003')">
+                                        <i class="fas fa-download"></i> JSON
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Document Types</h3>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="documentTypesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card" style="margin-top: 2rem;">
+                        <div class="chart-header">
+                            <h3>Monthly Processing</h3>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="monthlyProcessingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div class="settings-page" id="settings">
+            <h1 class="page-title">Settings</h1>
+            
+            <div class="settings-container">
+                <div class="settings-section">
+                    <h3>SAP Connection</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>SAP System Type</h4>
+                            <p>Select your SAP system version</p>
+                        </div>
+                        <select class="select-input" id="sapSystem">
+                            <option value="ecc">SAP ECC</option>
+                            <option value="s4hana" selected>SAP S/4HANA</option>
+                            <option value="both">Both</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>SAP Server URL</h4>
+                            <p>Enter your SAP server address</p>
+                        </div>
+                        <input type="text" class="select-input" id="sapServerUrl" placeholder="https://sap-server.example.com" value="https://s4hana.company.com">
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>SAP Client</h4>
+                            <p>Enter SAP client number</p>
+                        </div>
+                        <input type="text" class="select-input" id="sapClient" placeholder="100" value="100">
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Connection Status</h4>
+                            <p>Current connection to SAP system</p>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <span style="color: var(--success-green); font-weight: 600;">
+                                <i class="fas fa-check-circle"></i> Connected
+                            </span>
+                            <button class="sap-connect-btn">Test Connection</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Appearance</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Theme</h4>
+                            <p>Switch between light and dark mode</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="themeSwitch">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Animation Speed</h4>
+                            <p>Control the speed of UI animations</p>
+                        </div>
+                        <select class="select-input" id="animationSpeed">
+                            <option value="fast">Fast</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="slow">Slow</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Processing Settings</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Auto-Process Invoices</h4>
+                            <p>Automatically process invoices after upload</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoProcessSwitch" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Data Extraction Method</h4>
+                            <p>Select extraction method for invoice data</p>
+                        </div>
+                        <select class="select-input" id="extractionMethod">
+                            <option value="standard">Standard Extraction</option>
+                            <option value="advanced" selected>Advanced Extraction</option>
+                            <option value="ai">AI-Powered Extraction</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Confidence Threshold</h4>
+                            <p>Minimum confidence score for auto-approval</p>
+                        </div>
+                        <select class="select-input" id="confidenceThreshold">
+                            <option value="70">70%</option>
+                            <option value="80">80%</option>
+                            <option value="90" selected>90%</option>
+                            <option value="95">95%</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Invoice Types</h4>
+                            <p>Select supported invoice types</p>
+                        </div>
+                        <select class="select-input" id="invoiceTypes">
+                            <option value="po">PO-based Only</option>
+                            <option value="nonpo">Non-PO Only</option>
+                            <option value="both" selected>Both</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Notifications</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Email Notifications</h4>
+                            <p>Receive notifications via email</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="emailNotificationsSwitch" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Failed Invoice Alerts</h4>
+                            <p>Get alerts for failed invoice processing</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="failureAlertsSwitch" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="mainFooter">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>About IIDS</h4>
+                <p>The Intelligent Invoice Data System is a SAP-integrated platform that automates invoice processing using AI and OCR technology. Streamline your AP workflow with confidence scoring, validation, and seamless SAP integration.</p>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="#" data-page="dashboard">Dashboard</a></li>
+                    <li><a href="#" data-page="upload">Upload Invoice</a></li>
+                    <li><a href="#" data-page="history">Invoice History</a></li>
+                    <li><a href="#" data-page="settings">Settings</a></li>
+                    <li><a href="#">Documentation</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h4>Contact & Support</h4>
+                <p>For technical support or questions about IIDS, please contact our support team.</p>
+                <p style="margin-top: 1rem;">
+                    <i class="fas fa-envelope"></i> support@iids-sap.com<br>
+                    <i class="fas fa-phone"></i> +1 (800) 123-4567
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2024 Intelligent Invoice Data System. All rights reserved. SAP is a registered trademark of SAP SE.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // DOM Elements
+        const body = document.body;
+        const authOverlay = document.getElementById('authOverlay');
+        const mainHeader = document.getElementById('mainHeader');
+        const mainContainer = document.getElementById('mainContainer');
+        const mainFooter = document.getElementById('mainFooter');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeSwitch = document.getElementById('themeSwitch');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const pages = document.querySelectorAll('.dashboard, .upload-page, .processing-page, .history-page, .settings-page');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const browseBtn = document.getElementById('browseBtn');
+        const selectedFileContainer = document.getElementById('selectedFileContainer');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFileBtn');
+        const processBtn = document.getElementById('processBtn');
+        const saveToSAPBtn = document.getElementById('saveToSAPBtn');
+        const downloadJSONBtn = document.getElementById('downloadJSONBtn');
+        const editBtn = document.getElementById('editBtn');
+        const validateBtn = document.getElementById('validateBtn');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const historyItems = document.querySelectorAll('.history-item');
+        const quickActions = document.querySelectorAll('.upload-option');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const authTabs = document.querySelectorAll('.auth-tab');
+        const authForms = document.querySelectorAll('.auth-form');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const signupBtn = document.getElementById('signupBtn');
+        const switchToSignup = document.getElementById('switchToSignup');
+        const switchToLogin = document.getElementById('switchToLogin');
+        const googleLogin = document.getElementById('googleLogin');
+        const microsoftLogin = document.getElementById('microsoftLogin');
+        const googleSignup = document.getElementById('googleSignup');
+        const microsoftSignup = document.getElementById('microsoftSignup');
+        const rememberLogin = document.getElementById('rememberLogin');
+        const rememberSignup = document.getElementById('rememberSignup');
+
+        // Initialize Charts
+        let processingTrendChart, statusDistributionChart, documentTypesChart, monthlyProcessingChart;
+
+        // Get chart colors based on theme
+        function getChartColors() {
+            const isDarkMode = body.classList.contains('dark-theme');
+            
+            return {
+                primary: isDarkMode ? '#4db1ff' : '#0a6ed1',
+                primaryLight: isDarkMode ? 'rgba(77, 177, 255, 0.2)' : 'rgba(10, 110, 209, 0.2)',
+                success: isDarkMode ? '#5dc26a' : '#107e3e',
+                warning: isDarkMode ? '#f9b54c' : '#e76500',
+                error: isDarkMode ? '#ff8e8e' : '#bb0000',
+                gray: isDarkMode ? '#6a6d70' : '#6a6d70',
+                gridColor: isDarkMode ? '#3d4e60' : '#d9d9d9',
+                textColor: isDarkMode ? '#f5f6f7' : '#32363a',
+                doughnutColors: isDarkMode ? 
+                    ['#5dc26a', '#f9b54c', '#ff8e8e'] : 
+                    ['#107e3e', '#e76500', '#bb0000']
+            };
+        }
+
+        function initCharts() {
+            const colors = getChartColors();
+            
+            // Processing Trend Chart
+            const processingTrendCtx = document.getElementById('processingTrendChart').getContext('2d');
+            processingTrendChart = new Chart(processingTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Processed Invoices',
+                        data: [5, 8, 12, 9, 15, 7, 10],
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primaryLight,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.gridColor
+                            },
+                            ticks: {
+                                color: colors.textColor
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: colors.gridColor
+                            },
+                            ticks: {
+                                color: colors.textColor
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Status Distribution Chart
+            const statusDistributionCtx = document.getElementById('statusDistributionChart').getContext('2d');
+            statusDistributionChart = new Chart(statusDistributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Approved', 'Pending', 'Failed'],
+                    datasets: [{
+                        data: [65, 20, 15],
+                        backgroundColor: colors.doughnutColors,
+                        borderWidth: 1,
+                        borderColor: body.classList.contains('dark-theme') ? '#2a3b4d' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: colors.textColor,
+                                padding: 20
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Document Types Chart
+            const documentTypesCtx = document.getElementById('documentTypesChart').getContext('2d');
+            documentTypesChart = new Chart(documentTypesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['PDF', 'PNG', 'JPG', 'Other'],
+                    datasets: [{
+                        label: 'Document Types',
+                        data: [45, 15, 8, 5],
+                        backgroundColor: [
+                            colors.primary,
+                            colors.success,
+                            colors.warning,
+                            colors.gray
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.gridColor
+                            },
+                            ticks: {
+                                color: colors.textColor
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.textColor
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Monthly Processing Chart
+            const monthlyProcessingCtx = document.getElementById('monthlyProcessingChart').getContext('2d');
+            monthlyProcessingChart = new Chart(monthlyProcessingCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Invoices Processed',
+                        data: [28, 35, 42, 48, 52, 60],
+                        backgroundColor: colors.primary,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: colors.gridColor
+                            },
+                            ticks: {
+                                color: colors.textColor
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: colors.textColor
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update chart colors when theme changes
+        function updateChartColors() {
+            const colors = getChartColors();
+            
+            if (processingTrendChart) {
+                processingTrendChart.data.datasets[0].borderColor = colors.primary;
+                processingTrendChart.data.datasets[0].backgroundColor = colors.primaryLight;
+                processingTrendChart.options.scales.x.ticks.color = colors.textColor;
+                processingTrendChart.options.scales.y.ticks.color = colors.textColor;
+                processingTrendChart.options.scales.x.grid.color = colors.gridColor;
+                processingTrendChart.options.scales.y.grid.color = colors.gridColor;
+                processingTrendChart.update();
+            }
+            
+            if (statusDistributionChart) {
+                statusDistributionChart.data.datasets[0].backgroundColor = colors.doughnutColors;
+                statusDistributionChart.data.datasets[0].borderColor = body.classList.contains('dark-theme') ? '#2a3b4d' : '#ffffff';
+                statusDistributionChart.options.plugins.legend.labels.color = colors.textColor;
+                statusDistributionChart.update();
+            }
+            
+            if (documentTypesChart) {
+                documentTypesChart.data.datasets[0].backgroundColor = [
+                    colors.primary,
+                    colors.success,
+                    colors.warning,
+                    colors.gray
+                ];
+                documentTypesChart.options.scales.x.ticks.color = colors.textColor;
+                documentTypesChart.options.scales.y.ticks.color = colors.textColor;
+                documentTypesChart.options.scales.x.grid.color = colors.gridColor;
+                documentTypesChart.options.scales.y.grid.color = colors.gridColor;
+                documentTypesChart.update();
+            }
+            
+            if (monthlyProcessingChart) {
+                monthlyProcessingChart.data.datasets[0].backgroundColor = colors.primary;
+                monthlyProcessingChart.options.scales.x.ticks.color = colors.textColor;
+                monthlyProcessingChart.options.scales.y.ticks.color = colors.textColor;
+                monthlyProcessingChart.options.scales.x.grid.color = colors.gridColor;
+                monthlyProcessingChart.options.scales.y.grid.color = colors.gridColor;
+                monthlyProcessingChart.update();
+            }
+        }
+
+        // Theme Toggle
+        function toggleTheme() {
+            body.classList.toggle('dark-theme');
+            
+            const isDarkMode = body.classList.contains('dark-theme');
+            const icon = themeToggle.querySelector('i');
+            
+            if (isDarkMode) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+                themeSwitch.checked = true;
+                localStorage.setItem('theme', 'dark');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+                themeSwitch.checked = false;
+                localStorage.setItem('theme', 'light');
+            }
+            
+            // Update chart colors
+            updateChartColors();
+        }
+
+        // Initialize theme from localStorage
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-theme');
+            const icon = themeToggle.querySelector('i');
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+            themeSwitch.checked = true;
+        }
+
+        // Event listeners for theme toggle
+        themeToggle.addEventListener('click', toggleTheme);
+        themeSwitch.addEventListener('change', toggleTheme);
+
+        // Auth Functions
+        function showMainApp() {
+            authOverlay.classList.remove('active');
+            mainHeader.classList.add('active');
+            mainContainer.classList.add('active');
+            mainFooter.classList.add('active');
+            
+            // Initialize charts after app is shown
+            setTimeout(initCharts, 100);
+        }
+
+        function showAuth() {
+            authOverlay.classList.add('active');
+            mainHeader.classList.remove('active');
+            mainContainer.classList.remove('active');
+            mainFooter.classList.remove('active');
+        }
+
+        // Switch auth tabs
+        authTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const formId = tab.getAttribute('data-form');
+                
+                // Update active tab
+                authTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Show selected form
+                authForms.forEach(form => {
+                    if (form.id === `${formId}Form`) {
+                        form.classList.add('active');
+                    } else {
+                        form.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Login/Signup
+        loginBtn.addEventListener('click', () => {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (email && password) {
+                // Check remember me
+                if (rememberLogin.checked) {
+                    localStorage.setItem('rememberLogin', 'true');
+                    const expiryDate = new Date();
+                    expiryDate.setDate(expiryDate.getDate() + 30);
+                    localStorage.setItem('loginExpiry', expiryDate.toISOString());
+                }
+                
+                // Simulate login
+                showMainApp();
+                
+                // Store user info
+                localStorage.setItem('userLoggedIn', 'true');
+                localStorage.setItem('userEmail', email);
+                
+                // Show welcome message
+                setTimeout(() => {
+                    alert(`Welcome back, ${email}! You're now logged in.`);
+                }, 500);
+            } else {
+                alert('Please enter email and password');
+            }
+        });
+
+        signupBtn.addEventListener('click', () => {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            
+            if (name && email && password && confirmPassword) {
+                if (password === confirmPassword) {
+                    // Check remember me
+                    if (rememberSignup.checked) {
+                        localStorage.setItem('rememberLogin', 'true');
+                        const expiryDate = new Date();
+                        expiryDate.setDate(expiryDate.getDate() + 30);
+                        localStorage.setItem('loginExpiry', expiryDate.toISOString());
+                    }
+                    
+                    // Simulate signup
+                    showMainApp();
+                    
+                    // Store user info
+                    localStorage.setItem('userLoggedIn', 'true');
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('userName', name);
+                    
+                    // Show welcome message
+                    setTimeout(() => {
+                        alert(`Welcome to IIDS, ${name}! Your account has been created successfully.`);
+                    }, 500);
+                    
+                    // Switch to login tab for next time
+                    authTabs.forEach(t => t.classList.remove('active'));
+                    authTabs[0].classList.add('active');
+                    loginForm.classList.add('active');
+                    signupForm.classList.remove('active');
+                } else {
+                    alert('Passwords do not match');
+                }
+            } else {
+                alert('Please fill all fields');
+            }
+        });
+
+        // Social Login
+        function handleSocialLogin(provider) {
+            // Simulate social login
+            const email = `user@${provider}.com`;
+            showMainApp();
+            
+            // Store user info
+            localStorage.setItem('userLoggedIn', 'true');
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('socialLogin', provider);
+            
+            // Show welcome message
+            setTimeout(() => {
+                alert(`Welcome! You're logged in with ${provider}.`);
+            }, 500);
+        }
+
+        googleLogin.addEventListener('click', () => handleSocialLogin('Google'));
+        microsoftLogin.addEventListener('click', () => handleSocialLogin('Microsoft'));
+        googleSignup.addEventListener('click', () => handleSocialLogin('Google'));
+        microsoftSignup.addEventListener('click', () => handleSocialLogin('Microsoft'));
+
+        // Switch between login and signup
+        switchToSignup.addEventListener('click', (e) => {
+            e.preventDefault();
+            authTabs.forEach(t => t.classList.remove('active'));
+            authTabs[1].classList.add('active');
+            loginForm.classList.remove('active');
+            signupForm.classList.add('active');
+        });
+
+        switchToLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            authTabs.forEach(t => t.classList.remove('active'));
+            authTabs[0].classList.add('active');
+            signupForm.classList.remove('active');
+            loginForm.classList.add('active');
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('userLoggedIn');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('socialLogin');
+            localStorage.removeItem('rememberLogin');
+            localStorage.removeItem('loginExpiry');
+            showAuth();
+        });
+
+        // Check if user is already logged in
+        function checkAutoLogin() {
+            const userLoggedIn = localStorage.getItem('userLoggedIn');
+            const rememberLogin = localStorage.getItem('rememberLogin');
+            const loginExpiry = localStorage.getItem('loginExpiry');
+            
+            if (userLoggedIn === 'true' && rememberLogin === 'true') {
+                // Check if login hasn't expired
+                if (loginExpiry) {
+                    const expiryDate = new Date(loginExpiry);
+                    const now = new Date();
+                    
+                    if (now < expiryDate) {
+                        // Still valid, auto login
+                        showMainApp();
+                        return true;
+                    } else {
+                        // Expired, clear storage
+                        localStorage.removeItem('userLoggedIn');
+                        localStorage.removeItem('rememberLogin');
+                        localStorage.removeItem('loginExpiry');
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Check auto login on page load
+        if (!checkAutoLogin()) {
+            showAuth();
+        }
+
+        // Navigation
+        function navigateToPage(pageId) {
+            // Update active nav link
+            navLinks.forEach(link => {
+                if (link.getAttribute('data-page') === pageId) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+            
+            // Show selected page, hide others
+            pages.forEach(page => {
+                if (page.id === pageId) {
+                    page.classList.add('active');
+                } else {
+                    page.classList.remove('active');
+                }
+            });
+            
+            // Reset file selection when navigating away from upload page
+            if (pageId !== 'upload') {
+                resetFileSelection();
+            }
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Set up navigation event listeners
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = link.getAttribute('data-page');
+                navigateToPage(pageId);
+            });
+        });
+
+        // Quick actions navigation
+        quickActions.forEach(action => {
+            action.addEventListener('click', () => {
+                const pageId = action.getAttribute('data-page');
+                if (pageId) {
+                    navigateToPage(pageId);
+                }
+            });
+        });
+
+        // File Upload Functionality
+        let selectedFile = null;
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Handle file selection
+        function handleFileSelect(file) {
+            if (!file) return;
+            
+            selectedFile = file;
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            selectedFileContainer.classList.remove('hidden');
+            
+            // Update upload area text
+            uploadArea.innerHTML = `
+                <i class="fas fa-check-circle" style="color: var(--success-green);"></i>
+                <h3>File Selected</h3>
+                <p>${file.name}</p>
+                <button class="upload-btn" id="browseBtn">Change File</button>
+            `;
+            
+            // Reattach event listeners
+            const newBrowseBtn = uploadArea.querySelector('#browseBtn');
+            newBrowseBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            // Add dragover effect
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+        }
+
+        // Handle drag and drop
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        }
+
+        // Reset file selection
+        function resetFileSelection() {
+            selectedFile = null;
+            selectedFileContainer.classList.add('hidden');
+            
+            // Reset upload area
+            uploadArea.innerHTML = `
+                <i class="fas fa-file-invoice-dollar"></i>
+                <h3>Select Invoice PDF</h3>
+                <p>Drag and drop your invoice file here, or click to browse</p>
+                <button class="upload-btn" id="browseBtn">Browse Files</button>
+                <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg" hidden>
+                <p style="font-size: 0.9rem; margin-top: 1rem;">Supported formats: PDF, PNG, JPG (Max 10MB)</p>
+            `;
+            
+            // Reattach event listeners
+            const newBrowseBtn = uploadArea.querySelector('#browseBtn');
+            const newFileInput = uploadArea.querySelector('#fileInput');
+            
+            newBrowseBtn.addEventListener('click', () => {
+                newFileInput.click();
+            });
+            
+            newFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+            
+            // Add drag and drop listeners
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+        }
+
+        // Process invoice
+        function processInvoice() {
+            if (!selectedFile) {
+                alert('Please select a file first.');
+                return;
+            }
+            
+            // Show loading state
+            processBtn.innerHTML = '<i class="fas fa-cog"></i> Processing...';
+            processBtn.classList.add('loading');
+            
+            // Simulate processing delay
+            setTimeout(() => {
+                // Navigate to processing page
+                navigateToPage('processing');
+                
+                // Reset process button
+                processBtn.innerHTML = '<i class="fas fa-cog"></i> Process Invoice';
+                processBtn.classList.remove('loading');
+                
+                // Simulate step progression
+                simulateProcessingSteps();
+            }, 1500);
+        }
+
+        // Simulate processing steps
+        function simulateProcessingSteps() {
+            const steps = document.querySelectorAll('.step');
+            let currentStep = 1;
+            
+            // Step 1 is already completed (upload)
+            
+            // Step 2: Extracting data
+            setTimeout(() => {
+                steps[1].classList.remove('active');
+                steps[1].classList.add('completed');
+                steps[1].querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
+                steps[2].classList.add('active');
+                
+                // Update step label
+                document.querySelector('.step:nth-child(2) .step-label').textContent = 'Extracting Data';
+                document.querySelector('.step:nth-child(3) .step-label').textContent = 'Validation';
+            }, 2000);
+            
+            // Step 3: Validation
+            setTimeout(() => {
+                steps[2].classList.remove('active');
+                steps[2].classList.add('completed');
+                steps[2].querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
+                steps[3].classList.add('active');
+                
+                // Update step label
+                document.querySelector('.step:nth-child(3) .step-label').textContent = 'Validation';
+                document.querySelector('.step:nth-child(4) .step-label').textContent = 'Review';
+            }, 4000);
+            
+            // Step 4: Review (complete)
+            setTimeout(() => {
+                steps[3].classList.remove('active');
+                steps[3].classList.add('completed');
+                steps[3].querySelector('.step-circle').innerHTML = '<i class="fas fa-check"></i>';
+                
+                // Update step label
+                document.querySelector('.step:nth-child(4) .step-label').textContent = 'Review';
+            }, 6000);
+        }
+
+        // Download JSON function
+        function downloadJSON(invoiceId) {
+            // Sample JSON data structure
+            const invoiceData = {
+                invoiceId: invoiceId,
+                vendorName: "ABC Supplies Inc.",
+                invoiceNumber: invoiceId,
+                invoiceDate: "2024-04-15",
+                totalAmount: 1250.00,
+                currency: "USD",
+                poNumber: "PO-789012",
+                lineItems: [
+                    {
+                        description: "Office Supplies",
+                        quantity: 50,
+                        unitPrice: 15.00,
+                        total: 750.00
+                    },
+                    {
+                        description: "Printer Cartridges",
+                        quantity: 10,
+                        unitPrice: 50.00,
+                        total: 500.00
+                    }
+                ],
+                extractedFields: {
+                    vendorName: { value: "ABC Supplies Inc.", confidence: 0.98 },
+                    invoiceNumber: { value: invoiceId, confidence: 0.96 },
+                    invoiceDate: { value: "2024-04-15", confidence: 0.99 },
+                    totalAmount: { value: 1250.00, confidence: 0.95 },
+                    poNumber: { value: "PO-789012", confidence: 0.85 }
+                },
+                processingTimestamp: new Date().toISOString(),
+                sapIntegration: {
+                    status: "ready",
+                    mapping: {
+                        vendorName: "LIFNR",
+                        invoiceNumber: "BELNR",
+                        invoiceDate: "BLDAT",
+                        totalAmount: "WRBTR"
+                    }
+                }
+            };
+            
+            // Convert to JSON string
+            const jsonString = JSON.stringify(invoiceData, null, 2);
+            
+            // Create blob and download link
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${invoiceId}_data.json`;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+            
+            // Show success message
+            alert(`JSON file for ${invoiceId} downloaded successfully!`);
+        }
+
+        // Download original invoice function
+        function downloadOriginalInvoice(invoiceId) {
+            // Simulate downloading the original invoice file
+            alert(`Downloading original invoice: ${invoiceId}`);
+            
+            // In a real app, this would download the actual file from the server
+            // For now, we'll simulate it with a sample file
+            
+            // Create a sample PDF file (in real app, this would come from server)
+            const sampleText = `Invoice: ${invoiceId}\nVendor: ABC Supplies Inc.\nDate: April 15, 2024\nAmount: $1,250.00\n\nThank you for your business!`;
+            const blob = new Blob([sampleText], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${invoiceId}_original.pdf`;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+
+        // Save to SAP/Database
+        function saveToSAP() {
+            // Show loading state
+            saveToSAPBtn.innerHTML = '<i class="fas fa-spinner"></i> Saving to SAP...';
+            saveToSAPBtn.classList.add('loading');
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Show success message
+                alert('Invoice stored successfully in SAP!');
+                
+                // Reset button
+                saveToSAPBtn.innerHTML = '<i class="fas fa-database"></i> Save to SAP';
+                saveToSAPBtn.classList.remove('loading');
+                
+                // Change button to show success
+                saveToSAPBtn.innerHTML = '<i class="fas fa-check"></i> Saved to SAP';
+                saveToSAPBtn.style.backgroundColor = 'var(--success-green)';
+                
+                // Navigate back to dashboard after a delay
+                setTimeout(() => {
+                    navigateToPage('dashboard');
+                    
+                    // Reset button for next time
+                    saveToSAPBtn.innerHTML = '<i class="fas fa-database"></i> Save to SAP';
+                    saveToSAPBtn.style.backgroundColor = '';
+                }, 2000);
+            }, 2000);
+        }
+
+        // History filter
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // In a real app, this would filter the history list
+                // For now, we'll just show a message
+                console.log(`Filtering by: ${btn.textContent}`);
+            });
+        });
+
+        // History item click
+        historyItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const invoiceId = item.getAttribute('data-invoice');
+                console.log(`Viewing invoice: ${invoiceId}`);
+                
+                // In a real app, this would load the invoice details
+                // For now, we'll navigate to the processing page with this invoice
+                navigateToPage('processing');
+            });
+        });
+
+        // Edit data button
+        editBtn.addEventListener('click', () => {
+            alert('Edit functionality would open a form to modify extracted data.');
+        });
+
+        // Validate button
+        validateBtn.addEventListener('click', () => {
+            alert('Validation would check extracted data against SAP master data.');
+        });
+
+        // Download JSON from processing page
+        downloadJSONBtn.addEventListener('click', () => {
+            const invoiceId = document.getElementById('invoiceNumberDisplay').textContent;
+            downloadJSON(invoiceId);
+        });
+
+        // Event Listeners
+        browseBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        removeFileBtn.addEventListener('click', resetFileSelection);
+        processBtn.addEventListener('click', processInvoice);
+        saveToSAPBtn.addEventListener('click', saveToSAP);
+
+        // Initialize drag and drop
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+
+        // Settings change handlers
+        document.getElementById('autoProcessSwitch').addEventListener('change', function(e) {
+            console.log(`Auto-process invoices: ${e.target.checked}`);
+        });
+
+        document.getElementById('extractionMethod').addEventListener('change', function(e) {
+            console.log(`Extraction method changed to: ${e.target.value}`);
+        });
+
+        document.getElementById('confidenceThreshold').addEventListener('change', function(e) {
+            console.log(`Confidence threshold changed to: ${e.target.value}%`);
+        });
+
+        document.getElementById('sapSystem').addEventListener('change', function(e) {
+            console.log(`SAP System changed to: ${e.target.value}`);
+        });
+
+        document.getElementById('invoiceTypes').addEventListener('change', function(e) {
+            console.log(`Invoice types changed to: ${e.target.value}`);
+        });
+
+        document.getElementById('emailNotificationsSwitch').addEventListener('change', function(e) {
+            console.log(`Email notifications: ${e.target.checked}`);
+        });
+
+        document.getElementById('failureAlertsSwitch').addEventListener('change', function(e) {
+            console.log(`Failure alerts: ${e.target.checked}`);
+        });
+
+        document.getElementById('animationSpeed').addEventListener('change', function(e) {
+            console.log(`Animation speed changed to: ${e.target.value}`);
+            // In a real app, this would change CSS transition durations
+        });
+
+        // SAP Connection test
+        document.querySelectorAll('.sap-connect-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const currentText = this.textContent;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-check"></i> Connected';
+                    this.style.backgroundColor = 'var(--success-green)';
+                    
+                    setTimeout(() => {
+                        this.textContent = currentText;
+                        this.style.backgroundColor = '';
+                        this.disabled = false;
+                    }, 2000);
+                }, 1500);
+            });
+        });
+
+        // Make invoice numbers clickable
+        document.querySelectorAll('.invoice-link').forEach(link => {
+            link.style.cursor = 'pointer';
+            link.style.color = 'var(--primary-blue)';
+            link.style.textDecoration = 'underline';
+            link.addEventListener('mouseenter', function() {
+                this.style.color = 'var(--primary-blue-dark)';
+            });
+            link.addEventListener('mouseleave', function() {
+                this.style.color = 'var(--primary-blue)';
+            });
+        });
+
+        // Initialize the app
+        console.log('IIDS Frontend Application Loaded');
+        console.log('Ready for backend integration with REST API endpoints');
+    </script>
+</body>
+</html>
